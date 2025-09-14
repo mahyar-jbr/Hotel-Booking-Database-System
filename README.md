@@ -18,6 +18,12 @@ This project implements a normalized relational database schema that captures th
 
 ## 🏗️ Database Architecture
 
+### Entity-Relationship Diagram
+![ER Diagram](docs/er-diagram.png)
+
+### Database Schema
+![Database Schema](docs/database-schema.png)
+
 ### Entity-Relationship Model
 The database follows a normalized design with proper foreign key relationships and data integrity constraints:
 
