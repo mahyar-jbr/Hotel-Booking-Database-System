@@ -51,14 +51,17 @@ The database follows a normalized design with proper foreign key relationships a
 ### Schema Highlights
 ```sql
 -- Example table structure
-CREATE TABLE Properties (
-    PropertyID INT PRIMARY KEY IDENTITY(1,1),
-    HostID INT FOREIGN KEY REFERENCES Users(UserID),
-    PropertyName NVARCHAR(100) NOT NULL,
-    Location NVARCHAR(200) NOT NULL,
-    PropertyType NVARCHAR(50) NOT NULL,
-    Rating DECIMAL(3,2) DEFAULT 0.00,
-    CreatedDate DATETIME DEFAULT GETDATE()
+CREATE TABLE Property (
+    PropertyID INT PRIMARY KEY,
+    PropertyName VARCHAR(100) NOT NULL,
+    City VARCHAR(50),
+    Country VARCHAR(50),
+    PostalCode VARCHAR(15),
+    Rating DECIMAL(3,2) CHECK (Rating >= 0 AND Rating <= 5),
+    PropertyType VARCHAR(50),
+    PricePerNight DECIMAL(10,2) CHECK (PricePerNight >= 0),
+    UserID INT NOT NULL,
+    FOREIGN KEY (UserID) REFERENCES Host(UserID)
 );
 ```
 
@@ -78,31 +81,27 @@ The system includes sophisticated queries for business intelligence and applicat
 ```sql
 -- Total revenue by host
 SELECT 
+    h.UserID,
     u.FirstName + ' ' + u.LastName AS HostName,
-    SUM(p.Amount) AS TotalRevenue,
-    COUNT(b.BookingID) AS TotalBookings
-FROM Users u
-JOIN Properties pr ON u.UserID = pr.HostID
-JOIN Bookings b ON pr.PropertyID = b.PropertyID
-JOIN Payments p ON b.PaymentID = p.PaymentID
-GROUP BY u.UserID, u.FirstName, u.LastName
+    SUM(p.Amount) AS TotalRevenue
+FROM Host h
+JOIN [User] u ON u.UserID = h.UserID
+JOIN Property pr ON pr.UserID = h.UserID
+JOIN Payment p ON pr.PaymentID = p.PaymentID
+GROUP BY h.UserID, u.FirstName, u.LastName
 ORDER BY TotalRevenue DESC;
 ```
 
 ### Property Performance
 ```sql
--- Top-rated properties with booking counts
+-- Top-rated properties by rating
 SELECT 
-    p.PropertyName,
-    p.Rating,
-    COUNT(b.BookingID) AS BookingCount,
-    AVG(r.Rating) AS AverageReviewRating
-FROM Properties p
-LEFT JOIN Bookings b ON p.PropertyID = b.PropertyID
-LEFT JOIN Reviews r ON p.PropertyID = r.PropertyID
-GROUP BY p.PropertyID, p.PropertyName, p.Rating
-HAVING COUNT(b.BookingID) > 0
-ORDER BY p.Rating DESC, BookingCount DESC;
+    PropertyName,
+    City,
+    Country,
+    Rating
+FROM Property
+ORDER BY Rating DESC;
 ```
 
 ## 🚀 Getting Started
@@ -121,46 +120,45 @@ ORDER BY p.Rating DESC, BookingCount DESC;
 
 2. Execute the database creation scripts:
    ```sql
-   -- Run in order:
-   -- 1. schema-creation.sql
-   -- 2. sample-data.sql
-   -- 3. indexes-and-constraints.sql
+    -- Run in order:
+    -- 1. sql/schema/01-create-tables.sql
+    -- 2. sql/data/sample-data.sql
    ```
 
 3. Test with sample queries:
    ```sql
-   -- Execute queries from /queries/ folder
+    -- Execute queries from sql/queries/ folder
    ```
 
 ## 📁 Project Structure
 
 ```
-hotel-booking-database/
-├── sql/
-│   ├── schema/
-│   │   ├── create-tables.sql
-│   │   ├── constraints.sql
-│   │   └── indexes.sql
-│   ├── data/
-│   │   └── sample-data.sql
-│   └── queries/
-│       ├── business-intelligence/
-│       ├── application-queries/
-│       └── reports/
-├── docs/
-│   ├── er-diagram.png
-│   ├── relational-schema.png
-│   └── technical-report.pdf
+Hotel-Booking-Database-System/
 ├── README.md
-└── LICENSE
+├── LICENSE
+├── .gitignore
+├── docs/
+│   ├── business-requirements.md
+│   ├── er-diagram.png
+│   └── database-schema.png
+└── sql/
+    ├── schema/
+    │   └── 01-create-tables.sql
+    ├── data/
+    │   └── sample-data.sql
+    └── queries/
+        ├── revenue-analysis.sql
+        ├── booking-reports.sql
+        ├── property-analysis.sql
+        └── operational-queries.sql
 ```
 
 ## 🎯 Learning Outcomes
 
 This project demonstrates proficiency in:
 - **Database Design**: ER modeling, normalization, and schema optimization
-- **SQL Development**: Complex queries, joins, subqueries, and stored procedures
-- **Data Integrity**: Constraints, triggers, and referential integrity
+- **SQL Development**: Complex queries, joins, subqueries, and aggregate functions
+- **Data Integrity**: Constraints, foreign keys, and referential integrity
 - **Performance Optimization**: Indexing strategies and query optimization
 - **Business Analysis**: Translating real-world requirements into data models
 
